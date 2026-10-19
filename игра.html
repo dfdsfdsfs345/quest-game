@@ -1,0 +1,179 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Тайна старого особняка: Мега-издание</title>
+<style>
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body { min-height: 100vh; background: #05050f; background-image: radial-gradient(circle at 50% 50%, #111a2e 0%, #05050f 100%); font-family: 'Segoe UI', Tahoma, sans-serif; color: #e0e0e0; display: flex; justify-content: center; padding: 20px; overflow-x: hidden; }
+  .game-container { max-width: 900px; width: 100%; background: rgba(10, 15, 30, 0.95); border: 1px solid #533483; border-radius: 18px; box-shadow: 0 0 80px rgba(83, 52, 131, 0.4); overflow: hidden; display: flex; flex-direction: column; position: relative; }
+  .status-bar { display: flex; justify-content: space-between; align-items: center; padding: 14px 22px; background: #16213e; border-bottom: 1px solid #533483; font-size: 14px; flex-wrap: wrap; gap: 10px; }
+  .health { display: flex; align-items: center; gap: 8px; color: #ff6b6b; font-weight: bold; }
+  .health-bar { width: 140px; height: 12px; background: #2a0a0a; border-radius: 6px; overflow: hidden; border: 1px solid #533483; }
+  .health-fill { height: 100%; background: linear-gradient(90deg, #ff6b6b, #ffd700); transition: width 0.5s ease; }
+  .step-counter { color: #4ecdc4; font-weight: bold; }
+  .title-area { text-align: center; padding: 24px 20px 10px; background: linear-gradient(180deg, rgba(22, 33, 62, 0.8) 0%, transparent 100%); }
+  h1 { color: #ffd700; font-size: 28px; text-shadow: 0 0 20px rgba(255, 215, 0, 0.6); margin-bottom: 6px; letter-spacing: 1px; }
+  .subtitle { color: #888; font-size: 13px; font-style: italic; text-transform: uppercase; letter-spacing: 2px; }
+  #scene-art { font-size: 60px; text-align: center; padding: 15px 0; min-height: 90px; filter: drop-shadow(0 0 15px rgba(255, 255, 255, 0.2)); transition: all 0.3s ease; }
+  #story { background: #0d1525; margin: 0 22px; padding: 24px; border-radius: 12px; border-left: 5px solid #533483; min-height: 150px; line-height: 1.8; font-size: 16px; white-space: pre-wrap; box-shadow: inset 0 0 30px rgba(0, 0, 0, 0.6); }
+  #choices { padding: 20px 22px; display: flex; flex-direction: column; gap: 10px; }
+  button { padding: 16px 20px; background: linear-gradient(90deg, #16213e 0%, #1f2a4a 100%); color: #e0e0e0; border: 1px solid #533483; border-radius: 10px; font-size: 15px; cursor: pointer; text-align: left; transition: all 0.2s ease; width: 100%; display: flex; align-items: center; gap: 10px; }
+  button:hover { background: linear-gradient(90deg, #533483 0%, #6a3fa0 100%); transform: translateX(6px); border-color: #ffd700; box-shadow: 0 0 20px rgba(83, 52, 131, 0.8); }
+  button:active { transform: scale(0.98); }
+  button.special { border-color: #ffd700; color: #ffd700; background: linear-gradient(90deg, rgba(255, 215, 0, 0.1) 0%, rgba(255, 215, 0, 0.05) 100%); }
+  button.special:hover { background: #ffd700; color: #05050f; }
+  button.danger { border-color: #ff6b6b; color: #ff6b6b; }
+  button.danger:hover { background: #ff6b6b; color: #ffffff; box-shadow: 0 0 20px rgba(255, 107, 107, 0.6); }
+  #inventory { margin: 0 22px 22px; padding: 14px 18px; background: #0a0a1a; border-radius: 10px; font-size: 14px; color: #9d9d9d; border: 1px dashed #533483; display: flex; flex-wrap: wrap; gap: 8px; align-items: center; min-height: 50px; }
+  .item-chip { background: #16213e; padding: 6px 14px; border-radius: 20px; font-size: 13px; color: #ffd700; border: 1px solid #533483; animation: popIn 0.3s ease; }
+  @keyframes popIn { 0% { transform: scale(0); } 80% { transform: scale(1.1); } 100% { transform: scale(1); } }
+  .toast { position: fixed; top: 20px; right: 20px; background: #16213e; color: #ffd700; padding: 16px 24px; border-radius: 10px; border: 1px solid #ffd700; font-size: 15px; z-index: 100; box-shadow: 0 0 30px rgba(255, 215, 0, 0.4); animation: slideIn 0.3s ease, fadeOut 0.5s ease 2.5s forwards; }
+  @keyframes slideIn { from { transform: translateX(100%); opacity: 0; } to { transform: translateX(0); opacity: 1; } }
+  @keyframes fadeOut { to { transform: translateX(100%); opacity: 0; } }
+  .hint { text-align: center; font-size: 12px; color: #666; padding: 0 22px 20px; font-style: italic; }
+</style>
+</head>
+<body>
+<div class="game-container">
+  <div class="status-bar">
+    <div class="health">❤️ Здоровье: <div class="health-bar"><div class="health-fill" id="healthBar" style="width: 100%"></div></div><span id="healthNum">100</span></div>
+    <div class="step-counter">👣 Шагов: <span id="stepNum">0</span></div>
+  </div>
+  <div class="title-area"><h1>Тайна старого особняка</h1><div class="subtitle">Мега-издание</div></div>
+  <div id="scene-art"></div>
+  <div id="story"></div>
+  <div id="choices"></div>
+  <div id="inventory">🎒 Инвентарь: <div id="items" style="display:flex; gap:8px; flex-wrap:wrap;"></div></div>
+  <div class="hint">💡 Исследуй всё. Предметы можно комбинировать. Ищи записки, чтобы узнать код от сейфа!</div>
+</div>
+
+<script>
+let state = { inventory: [], flags: {}, health: 100, steps: 0 };
+
+const beep = (freq, duration = 0.1) => { try { const ctx = new (window.AudioContext || window.webkitAudioContext)(); const osc = ctx.createOscillator(); const gain = ctx.createGain(); osc.frequency.value = freq; gain.gain.setValueAtTime(0.05, ctx.currentTime); gain.gain.exponentialRampToValueAtTime(0.001, ctx.currentTime + duration); osc.connect(gain); gain.connect(ctx.destination); osc.start(); osc.stop(ctx.currentTime + duration); } catch (e) {} };
+const showToast = (message) => { const toast = document.createElement("div"); toast.className = "toast"; toast.textContent = message; document.body.appendChild(toast); setTimeout(() => toast.remove(), 3000); };
+const updateInventory = () => { const box = document.getElementById("items"); box.innerHTML = ""; if (state.inventory.length === 0) { box.textContent = "пусто"; } else { state.inventory.forEach(item => { const chip = document.createElement("div"); chip.className = "item-chip"; chip.textContent = item; box.appendChild(chip); }); } };
+const addItem = (item) => { if (!state.inventory.includes(item)) { state.inventory.push(item); beep(880); showToast(`✨ Получено: ${item}`); updateInventory(); } };
+const removeItem = (item) => { const index = state.inventory.indexOf(item); if (index > -1) { state.inventory.splice(index, 1); updateInventory(); } };
+const hasItem = (item) => state.inventory.includes(item);
+const damage = (amount) => { state.health = Math.max(0, state.health - amount); beep(150); showToast(`💥 -${amount} здоровья!`); document.getElementById("healthBar").style.width = state.health + "%"; document.getElementById("healthNum").textContent = state.health; return state.health <= 0; };
+const heal = (amount) => { state.health = Math.min(100, state.health + amount); beep(1200); showToast(`💚 +${amount} здоровья`); document.getElementById("healthBar").style.width = state.health + "%"; document.getElementById("healthNum").textContent = state.health; };
+
+const scenes = {
+  start: { art: "🌙 🏚️ 🌲", text: "Ты стоишь перед заброшенным особняком. Ночь. Дверь приоткрыта, изнутри тянет холодом и сыростью. Где-то вдалеке ухает сова. У твоих ног лежит старый фонарик, покрытый пылью.", onEnter: () => addItem("фонарик"), choices: [{ text: "🚪 Войти в особняк через парадную дверь", next: "hall" }, { text: "🌿 Обойти дом сзади — может, там есть другой вход", next: "backyard" }, { text: "🔍 Внимательно осмотреть крыльцо", next: "porch" }, { text: "🏃 Уйти домой (завершить игру)", next: "end_coward" }] },
+  porch: { art: "🚪 🔍 🕯️", text: "Крыльцо старое, доски скрипят под ногами. Под ковриком ты находишь сложенную вчетверо записку, написанную выцветшими чернилами: «Остерегайся зеркал на втором этаже. Они помнят больше, чем должны. Ищи зелье, чтобы выжить».", onEnter: () => addItem("записка"), choices: [{ text: "🚪 Войти в дом", next: "hall" }, { text: "↩️ Вернуться на улицу", next: "start" }] },
+
+  hall: { art: "🕯️ 🏛️ 🪜", text: "Ты в просторном тёмном холле. Слева — массивная лестница на второй этаж. Справа — приоткрытая дверь в гостиную. Прямо — длинный коридор вглубь дома. На стене висит старый подсвечник, а на полу лежит тяжёлый ковёр с выцветшим узором.", onEnter: () => { if (!state.flags.candleTaken) { state.flags.candleTaken = true; addItem("подсвечник"); } }, choices: [{ text: "⬆️ Подняться по лестнице на второй этаж", next: "upstairs" }, { text: "🚪 Зайти в гостиную", next: "living_room" }, { text: "➡️ Пройти в коридор", next: "corridor" }, { text: "🔍 Осмотреть ковёр на полу", next: "hall_carpet" }] },
+  hall_carpet: { art: "🧶 🔑 ✨", text: "Ты отодвигаешь тяжёлый ковёр. Под ним — маленький железный ключ, покрытый ржавчиной. Похоже, он от чего-то важного. Ты кладёшь его в карман.", onEnter: () => addItem("ключ"), choices: [{ text: "↩️ Вернуться в холл", next: "hall" }] },
+  corridor: { art: "🚪 🚪 🚪", text: "Коридор уходит вглубь дома. Три двери: слева — библиотека, справа — кухня, а в самом конце — тяжёлая дверь в винный погреб. На стене висит тусклая лампа.", choices: [{ text: "📚 Зайти в библиотеку", next: "library" }, { text: "🍳 Зайти на кухню", next: "kitchen" }, { text: "🍷 Спуститься в винный погреб", next: "wine_cellar" }, { text: "↩️ Вернуться в холл", next: "hall" }] },
+
+  library: { art: "📚 🕯️ 📜", text: "Библиотека забита старыми книгами. Пахнет пылью и плесенью. На столе — раскрытый гримуар с закладкой. На полке — стеклянная банка с чем-то светящимся. В углу стоит глобус.", choices: [{ text: "📖 Прочитать гримуар", next: "book" }, { text: "🫙 Взять светящуюся банку", next: "jar" }, { text: "🔍 Осмотреть книжные полки", next: "bookshelf" }, { text: "🌍 Покрутить глобус", next: "globe" }, { text: "↩️ Выйти в коридор", next: "corridor" }] },
+  book: { art: "📖 🔮 📜", text: "Гримуар оказывается дневником алхимика. Запись гласит: «Смешай траву, пепел и родниковую воду в котле на кухне — получишь эликсир жизни». Рядом лежит сушёная трава.", onEnter: () => addItem("трава"), choices: [{ text: "↩️ Назад к полкам", next: "library" }] },
+  jar: { art: "🫙 ✨ 🌟", text: "В банке — светящийся порошок. Ты открываешь её и вдыхаешь — голова кружится, но силы возвращаются!", onEnter: () => { if (!state.flags.jarUsed) { state.flags.jarUsed = true; heal(20); } }, choices: [{ text: "↩️ Назад", next: "library" }] },
+  bookshelf: { art: "📚 🔍 🕸️", text: "Среди книг ты находишь старую карту особняка. На ней отмечен подвал, чердак и странный символ в центре гостиной.", onEnter: () => addItem("карта"), choices: [{ text: "↩️ Назад", next: "library" }] },
+  globe: { art: "🌍 🔍 🗝️", text: "Ты крутишь глобус и слышишь щелчок. Внутри что-то есть! Ты открываешь его — там спрятан медный ключик.", onEnter: () => addItem("медный ключ"), choices: [{ text: "↩️ Назад", next: "library" }] },
+
+  kitchen: { art: "🍳 🔪 🕯️", text: "Кухня. Посуда покрыта пылью. На плите — старый котёл. В шкафу — банки со специями. У окна лежит тяжёлый нож. В углу стоит ведро с водой.", choices: [{ text: "🥣 Заглянуть в котёл", next: "pot" }, { text: "🔪 Взять нож", next: "knife" }, { text: "🧂 Осмотреть специи", next: "spices" }, { text: "💧 Набрать воды", next: "water" }, { text: "🧪 Попробовать сварить зелье", next: "craft" }, { text: "↩️ Выйти в коридор", next: "corridor" }] },
+  pot: { art: "🥣 💀 🕷️", text: "В котле что-то шевелится! Ты отшатываешься, но успеваешь заметить: это гигантский паук. Он кусает тебя за руку!", onEnter: () => { if (!state.flags.potOpened) { state.flags.potOpened = true; if (damage(15)) setTimeout(() => renderScene("end_death"), 500); } }, choices: [{ text: "↩️ Отойти от плиты", next: "kitchen" }] },
+  knife: { art: "🔪 ⚔️ ✨", text: "Старый кухонный нож. Тяжёлый, но острый. Может пригодиться для защиты.", onEnter: () => addItem("нож"), choices: [{ text: "↩️ Назад", next: "kitchen" }] },
+  spices: { art: "🧂 🌿 ✨", text: "Среди специй ты находишь щепотку пепла в маленькой баночке. Пригодится для зелья.", onEnter: () => addItem("пепел"), choices: [{ text: "↩️ Назад", next: "kitchen" }] },
+  water: { art: "💧 🪣 ✨", text: "Ты зачерпываешь воду из ведра в старую склянку.", onEnter: () => addItem("вода"), choices: [{ text: "↩️ Назад", next: "kitchen" }] },
+  craft: { art: "🧪 ⚗️ ✨", text: () => hasItem("трава") && hasItem("пепел") && hasItem("вода") ? "Ты бросаешь траву, пепел и воду в котёл. Раздаётся шипение, и появляется светящееся зелье!" : "У тебя не хватает ингредиентов. Нужны: трава, пепел и вода.", onEnter: () => { if (hasItem("трава") && hasItem("пепел") && hasItem("вода") && !state.flags.crafted) { state.flags.crafted = true; removeItem("трава"); removeItem("пепел"); removeItem("вода"); addItem("зелье жизни"); } }, choices: [{ text: "↩️ Назад", next: "kitchen" }] },
+
+  wine_cellar: { art: "🍷 🕸️ 🕯️", text: "Винный погреб. Пахнет кислым вином. Вдоль стен стоят пустые бочки. В углу лежит скелет, сжимающий в руке какую-то флягу.", choices: [{ text: "💀 Осмотреть скелет", next: "cellar_skeleton" }, { text: "🛢️ Заглянуть в бочки", next: "barrels" }, { text: "↩️ Вернуться в коридор", next: "corridor" }] },
+  cellar_skeleton: { art: "💀 🧪 ⚠️", text: "Ты разжимаешь костлявые пальцы. В руке — фляга с мутной жидкостью. На этикетке написано: «Яд». Лучше не пить.", onEnter: () => addItem("фляга с ядом"), choices: [{ text: "↩️ Назад", next: "wine_cellar" }] },
+  barrels: { art: "🛢️ 🔍 🪙", text: "В одной из бочек, среди гнилой соломы, ты находишь золотую монету!", onEnter: () => addItem("золотая монета"), choices: [{ text: "↩️ Назад", next: "wine_cellar" }] },
+
+  living_room: { art: "🛋️ 🕯️ 📔", text: "В гостиной пыль и паутина. На столе лежит пожелтевший дневник, а в углу стоит сундук с замком. На стене — большой портрет хозяина. Камин давно потух, но выглядит странно.", choices: [{ text: "📖 Прочитать дневник", next: "diary" }, { text: "🔐 Открыть сундук", next: "chest" }, { text: "🖼️ Рассмотреть портрет", next: "portrait" }, { text: "🔥 Осмотреть камин", next: "fireplace" }, { text: "↩️ Вернуться в холл", next: "hall" }] },
+  diary: { art: "📔 ✍️ 🔮", text: "Дневник рассказывает о хозяине особняка — алхимике. Он спрятал ключ от сундука под ковром в холле, а сам исчез много лет назад. В конце — странная запись: «Амулет оживёт только в подвале».", onEnter: () => { state.flags.knowsKey = true; }, choices: [{ text: "↩️ Вернуться в гостиную", next: "living_room" }] },
+  chest: { art: "🧰 🔐 💎", text: () => state.flags.amulet ? "Сундук пуст. Ты уже забрал амулет." : (hasItem("ключ") || hasItem("медный ключ")) ? "Ключ идеально подходит! В сундуке ты находишь старинный амулет, светящийся голубым. И записку: «Тот, кто найдёт это — разгадает тайну»." : "Сундук заперт накрепко. Замок старый, но крепкий. Нужен ключ.", onEnter: () => { if ((hasItem("ключ") || hasItem("медный ключ")) && !state.flags.amulet) { state.flags.amulet = true; addItem("амулет"); } }, choices: () => state.flags.amulet ? [{ text: "🌟 Взять амулет и уйти (хорошая концовка)", next: "end_good", special: true }, { text: "🔍 Остаться и исследовать дальше", next: "living_room" }] : [{ text: "↩️ Назад", next: "living_room" }] },
+  portrait: { art: "🖼️ 👤 👁️", text: "Портрет хозяина. Глаза нарисованы так, будто следят за тобой. За рамой что-то есть! Ты отодвигаешь портрет — за ним тайник с монетой.", onEnter: () => addItem("старинная монета"), choices: [{ text: "↩️ Назад", next: "living_room" }] },
+  fireplace: { art: "🔥 🧱 🔍", text: "Ты заглядываешь в камин и замечаешь, что один кирпич в стене выпирает. Ты нажимаешь на него, и стена отъезжает в сторону! Открывается тайная комната.", choices: [{ text: "🚪 Войти в тайную комнату", next: "secret_room" }, { text: "↩️ Назад", next: "living_room" }] },
+  secret_room: { art: "🔮 📜 🕯️", text: "Тайная комната алхимика. В центре стоит стол с колбами. На стене висит мантия. На столе лежит записка: «В подвале спит страж. Амулет усыпит его».", onEnter: () => addItem("мантия алхимика"), choices: [{ text: "↩️ Вернуться в гостиную", next: "living_room" }] },
+
+  upstairs: { art: "🪜 🚪 🚪", text: "Наверху длинный коридор с двумя дверями. Из-за одной слышится тихий скрип. В конце коридора — окно с видом на сад. На стене висит странная картина.", choices: [{ text: "🚪 Открыть первую дверь", next: "room1" }, { text: "🚪 Открыть вторую дверь", next: "room2" }, { text: "🪟 Подойти к окну", next: "window" }, { text: "🖼️ Рассмотреть картину", next: "painting" }, { text: "⬆️ Подняться на чердак", next: "attic" }, { text: "⬇️ Спуститься вниз", next: "hall" }] },
+  window: { art: "🪟 🌳 🌙", text: "Из окна виден сад. Внизу, у старого дерева, что-то блестит. Ты запоминаешь место — туда можно спуститься через задний двор.", onEnter: () => { state.flags.sawGarden = true; }, choices: [{ text: "↩️ Назад в коридор", next: "upstairs" }] },
+  painting: { art: "🖼️ 🎨 👁️", text: "На картине изображён сам особняк. Но присмотревшись, ты замечаешь: на чердаке горит свет. Значит, там кто-то есть?", choices: [{ text: "↩️ Назад", next: "upstairs" }] },
+  room1: { art: "🛏️ 💀 🗄️", text: "Спальня. На кровати лежит скелет в старинной одежде. Жутко, но в шкафу что-то блестит. На столе — свеча.", choices: [{ text: "🗄️ Открыть шкаф", next: "wardrobe" }, { text: "🕯️ Взять свечу", next: "candle" }, { text: "💀 Осмотреть скелет", next: "skeleton" }, { text: "↩️ Выйти в коридор", next: "upstairs" }] },
+  wardrobe: { art: "🗄️ 🗺️ ✨", text: "В шкафу ты находишь старинную карту особняка с пометкой «X» в подвале.", onEnter: () => addItem("карта"), choices: [{ text: "↩️ Выйти в коридор", next: "upstairs" }] },
+  candle: { art: "🕯️ 🔥 ✨", text: "Ты берёшь свечу. Теперь у тебя есть свет — в тёмных местах будет не так страшно.", onEnter: () => addItem("свеча"), choices: [{ text: "↩️ Назад", next: "room1" }] },
+  skeleton: { art: "💀 📜 ⚠️", text: "Ты осматриваешь скелет. В руке — записка: «Не буди то, что спит в подвале. Ищи зелье, чтобы выжить». По спине пробегает холодок.", onEnter: () => { state.flags.knowsWarning = true; }, choices: [{ text: "↩️ Отойти", next: "room1" }] },
+  room2: { art: "🪞 ✨ 👤", text: "Пустая комната. Лишь в углу стоит старое зеркало. В отражении ты видишь… себя? Но что-то не так. Отражение улыбается, хотя ты — нет.", choices: [{ text: "🪞 Прикоснуться к зеркалу", next: "mirror", danger: true }, { text: "🔍 Осмотреть комнату", next: "room2_search" }, { text: "↩️ Уйти", next: "upstairs" }] },
+  room2_search: { art: "🔍 🕯️ 📜", text: "Под кроватью ты находишь старый фолиант с заклинанием. Страница с ритуалом вырвана, но осталось описание амулета.", onEnter: () => addItem("фолиант"), choices: [{ text: "🪞 Всё-таки подойти к зеркалу", next: "mirror", danger: true }, { text: "↩️ Уйти", next: "upstairs" }] },
+  mirror: { art: "🪞 😱 💀", text: "Зеркало холодное. Отражение хватает тебя за руку и тянет внутрь! Ты в ужасе вырываешься и отшатываешься, ударяясь головой о стену.", onEnter: () => { if (!state.flags.mirrorBurned) { state.flags.mirrorBurned = true; if (damage(25)) setTimeout(() => renderScene("end_death"), 500); } }, choices: [{ text: "↩️ Выбежать из комнаты", next: "upstairs" }] },
+
+  attic: { art: "🕸️ 🪜 🕯️", text: "Ты поднимаешься на чердак. Здесь темно и пахнет старым деревом. В углу стоит сундук, а на стуле сидит кукла. Очень странная кукла.", choices: [{ text: "🧸 Взять куклу", next: "doll" }, { text: "🧰 Открыть сундук", next: "attic_chest" }, { text: "⬇️ Спуститься вниз", next: "upstairs" }] },
+  doll: { art: "🧸 👁️ ⚠️", text: "Кукла поворачивает голову и смотрит на тебя! Ты в ужасе роняешь её. Из неё выпадает ключ.", onEnter: () => addItem("ключ от чердака"), choices: [{ text: "↩️ Назад", next: "attic" }] },
+  attic_chest: { art: "🧰 💎 🗝️", text: "Сундук открывается. Внутри — странный кристалл, светящийся фиолетовым.", onEnter: () => addItem("кристалл"), choices: [{ text: "↩️ Назад", next: "attic" }] },
+
+  backyard: { art: "🌳 🪙 🚪", text: "За домом — старый сад. В траве что-то блестит. Рядом — дверь в подвал. У дерева — странный круг, выложенный камнями.", choices: [{ text: "✨ Поднять блестящий предмет", next: "backyard_item" }, { text: "⬇️ Спуститься в подвал", next: "basement" }, { text: "⭕ Осмотреть каменный круг", next: "stone_circle" }, { text: "🌳 Осмотреть старое дерево", next: "old_tree" }, { text: "↩️ Вернуться к входу", next: "start" }] },
+  backyard_item: { art: "🪙 ✨ 💰", text: "Это старая монета. Возможно, пригодится.", onEnter: () => addItem("монета"), choices: [{ text: "⬇️ Спуститься в подвал", next: "basement" }, { text: "↩️ Вернуться к входу", next: "start" }] },
+  old_tree: { art: "🌳 🕳️ 🌿", text: "Под старым дубом есть дупло. В нём ты находишь странный амулет в виде волка.", onEnter: () => addItem("волчий амулет"), choices: [{ text: "↩️ Назад", next: "backyard" }] },
+  
+  stone_circle: { art: "⭕ 🗿 🌿", text: "Каменный круг. В центре — углубление. Если положить туда что-то ценное, может произойти чудо…", choices: () => { const c = [{ text: "↩️ Отойти", next: "backyard" }]; if (hasItem("монета") || hasItem("старинная монета") || hasItem("золотая монета")) { c.unshift({ text: "🪙 Положить монету в центр", next: "stone_offering", special: true }); } return c; } },
+  stone_offering: { art: "⭕ 🪙 ✨", text: "Ты кладёшь монету в центр круга. Камни вспыхивают голубым светом, и из земли поднимается старинный медальон. Ты берёшь его — он тёплый.", onEnter: () => { removeItem("монета"); removeItem("старинная монета"); removeItem("золотая монета"); addItem("медальон"); }, choices: [{ text: "↩️ Назад в сад", next: "backyard" }] },
+
+  basement: { art: "⬇️ 🕯️ 🗿", text: "Тёмный подвал. Пахнет сыростью. В центре стоит алтарь с пустым углублением под амулет. В углу что-то шевелится… Слышится тяжёлое дыхание стража.", choices: () => { const c = [{ text: "↩️ Выйти наверх", next: "backyard" }]; if (hasItem("амулет") || hasItem("волчий амулет")) { c.unshift({ text: "✨ Вставить амулет в алтарь (СЕКРЕТ!)", next: "end_secret", special: true }); } if (hasItem("зелье жизни")) { c.unshift({ text: "🧪 Выпить зелье и сразиться со стражем", next: "end_fight", special: true }); } return c; } },
+  end_good: { art: "🌟 🏆 ✨", text: "Ты выходишь из особняка с амулетом в руке. Тайна раскрыта. Ты — новый хранитель древней силы.\n\n✨ КОНЕЦ (хорошая концовка)", isEnd: true },
+  end_secret: { art: "🏆 💎 👑", text: "Амулет вспыхивает! Алтарь открывает потайной ход, ведущий в сокровищницу алхимика. Ты находишь древние знания и богатства.\n\n🏆 СЕКРЕТНАЯ КОНЦОВКА!", isEnd: true },
+  end_fight: { art: "🧪 ⚔️ 👹", text: "Ты выпиваешь зелье. Твои мышцы наливаются силой, и ты наносишь сокрушительный удар стражу! Он рассыпается в прах.\n\n⚔️ КОНЦОВКА ВОИНА!", isEnd: true },
+  end_coward: { art: "🚪 🏃 🌙", text: "Ты уходишь домой. Особняк остаётся хранить свои тайны. Может, в другой раз…\n\n🚪 КОНЕЦ", isEnd: true },
+  end_death: { art: "💀 ⚰️ 🥀", text: "Ты теряешь сознание от боли и падаешь на холодный пол. Больше ты не проснёшься в этом доме…\n\n💀 ВЫ ПОГИБЛИ", isEnd: true }
+};// =====================================================================
+// БЛОК 3: ДВИЖОК И ЗАПУСК ИГРЫ (Продолжение)
+// =====================================================================
+
+function renderScene(id) {
+  const scene = scenes[id];
+  if (!scene) return;
+
+  state.steps++;
+  document.getElementById("stepNum").textContent = state.steps;
+
+  if (scene.onEnter) scene.onEnter();
+
+  document.getElementById("scene-art").textContent = scene.art || "❓";
+  document.getElementById("story").textContent = typeof scene.text === "function" ? scene.text() : scene.text;
+  updateInventory();
+
+  const choicesBox = document.getElementById("choices");
+  choicesBox.innerHTML = "";
+
+  if (scene.isEnd) {
+    beep(523); setTimeout(() => beep(659), 150); setTimeout(() => beep(784), 300);
+    const btn = document.createElement("button");
+    btn.textContent = "🔄 Играть снова";
+    btn.className = "special";
+    btn.onclick = () => {
+      state.inventory = [];
+      state.flags = {};
+      state.health = 100;
+      state.steps = 0;
+      document.getElementById("healthBar").style.width = "100%";
+      document.getElementById("healthNum").textContent = "100";
+      renderScene("start");
+    };
+    choicesBox.appendChild(btn);
+    return;
+  }
+
+  const choices = typeof scene.choices === "function" ? scene.choices() : scene.choices;
+
+  choices.forEach(choice => {
+    const btn = document.createElement("button");
+    btn.textContent = choice.text;
+    if (choice.special) btn.classList.add("special");
+    if (choice.danger) btn.classList.add("danger");
+    btn.onclick = () => renderScene(choice.next);
+    choicesBox.appendChild(btn);
+  });
+}
+
+// Запуск игры
+renderScene("start");
+
+</script>
+</body>
+</html>
